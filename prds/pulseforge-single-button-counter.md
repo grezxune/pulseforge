@@ -8,6 +8,7 @@ log:
   - 2026-03-05: Implemented sharded Convex counter model and one-screen branded UI.
   - 2026-03-05: Added bot protection with Turnstile verification, token replay prevention, and server-side rate limiting.
   - 2026-03-06: Removed Turnstile/captcha integration and removed remaining bot-rate-limit table usage.
+  - 2026-03-06: Added comprehensive SEO/distribution metadata (Open Graph, Twitter cards, canonical tags, JSON-LD, sitemap, robots, and web manifest).
 ---
 
 ## Problem
@@ -31,6 +32,7 @@ This experiment validates high-scale write behavior, UX polish under constrained
 - Reflect count updates in realtime.
 - Show loading and error feedback.
 - Provide matching logo + favicon.
+- Publish complete SEO/share metadata for social cards and crawler indexing.
 
 ## Non-functional Requirements
 - Mobile and desktop responsive.

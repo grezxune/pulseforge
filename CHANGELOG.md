@@ -20,3 +20,6 @@
 - Updated the PulseForge title typography to match the primary page font.
 - Reprocessed the provided logo file to remove baked checkerboard/white rectangle artifacts and regenerated all web icon assets.
 - Removed white highlights from the circular logo badge gradient for a darker premium finish.
+- Added comprehensive SEO/share metadata (canonical, robots, Open Graph, Twitter cards, and JSON-LD).
+- Added `robots.txt`, `sitemap.xml`, and `site.webmanifest` for indexing/distribution.
+- Added a dedicated social preview image (`og-image.png`) and stamped it with the live global count.

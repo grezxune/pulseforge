@@ -1,0 +1,27 @@
+{
+  "name": "PulseForge",
+  "short_name": "PulseForge",
+  "description": "A one-button real-time global press counter experiment.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#111111",
+  "theme_color": "#111111",
+  "icons": [
+    {
+      "src": "/favicon.png",
+      "sizes": "64x64",
+      "type": "image/png"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    },
+    {
+      "src": "/logo.png",
+      "sizes": "300x300",
+      "type": "image/png"
+    }
+  ]
+}
