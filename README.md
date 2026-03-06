@@ -15,6 +15,20 @@ bun run dev
 ```
 
 `convex dev` writes `.env.local` with `VITE_CONVEX_URL` for the frontend.
+Use [`.env.example`](/Users/tommy/Documents/code/grez-studios/pulseforge/.env.example) as the baseline for required env variables.
+
+## Bot Protection Configuration
+Set these before running in a shared/public environment:
+
+- Frontend (`.env.local`): `VITE_TURNSTILE_SITE_KEY=...`
+- Convex runtime env: `TURNSTILE_SECRET_KEY=...`
+- Optional hard check: `TURNSTILE_EXPECTED_HOSTNAME=your-domain.com`
+
+For Convex cloud deployments:
+```bash
+bunx convex env set TURNSTILE_SECRET_KEY your-secret-key
+bunx convex env set TURNSTILE_EXPECTED_HOSTNAME pulseforge-rho.vercel.app
+```
 
 ## Scripts
 - `bun run dev` - start Vite dev server
@@ -26,7 +40,11 @@ bun run dev
 
 ## Architecture Notes
 - Counter uses a sharded Convex table (`counterShards`) to support high concurrent write throughput.
-- Frontend aggregates shard counts via `getTotal` and submits increment mutations through `increment`.
+- Frontend aggregates shard counts via `getTotal` and submits protected press actions through `pressWithProtection`.
+- Bot protection is enforced server-side:
+  - Cloudflare Turnstile token verification
+  - one-time captcha token replay protection
+  - per-client rate limiting and temporary auto-blocking
 
 ## Deployment Notes
 - Frontend target: Vercel.

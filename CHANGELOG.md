@@ -7,3 +7,4 @@
 - Added matching logo and favicon assets.
 - Added unit and integration tests with Vitest + Testing Library.
 - Added project governance docs: local AGENTS.md, UxStyle.md, and PRD.
+- Added server-enforced bot protection with Turnstile verification, captcha replay prevention, and rate limiting.

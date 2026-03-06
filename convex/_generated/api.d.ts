@@ -9,6 +9,8 @@
  */
 
 import type * as counter from "../counter.js";
+import type * as lib_hash from "../lib/hash.js";
+import type * as securePress from "../securePress.js";
 
 import type {
   ApiFromModules,
@@ -18,6 +20,8 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   counter: typeof counter;
+  "lib/hash": typeof lib_hash;
+  securePress: typeof securePress;
 }>;
 
 /**

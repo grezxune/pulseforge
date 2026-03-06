@@ -6,6 +6,7 @@ log:
   - 2026-03-05: Initial requirements documented for single-page Convex experiment.
   - 2026-03-05: Chosen stack switched from Next.js to Vite + React for minimal overhead.
   - 2026-03-05: Implemented sharded Convex counter model and one-screen branded UI.
+  - 2026-03-05: Added bot protection with Turnstile verification, token replay prevention, and server-side rate limiting.
 ---
 
 ## Problem
@@ -37,13 +38,16 @@ This experiment validates high-scale write behavior, UX polish under constrained
 
 ## Data & Integrations
 - Convex table `counterShards` with write sharding for increment throughput.
+- Convex table `usedCaptchaTokens` to enforce one-time captcha token usage.
+- Convex table `botClients` for per-client rate-limit state and temporary blocks.
 - Convex query `getTotal` aggregates shard counts.
-- Convex mutation `increment` selects/uses shard and increments atomically.
+- Convex action `pressWithProtection` verifies Turnstile server-side and calls internal increment logic.
 
 ## Security Architecture & Threat Model
-- Trust boundary: public client to Convex public mutation/query.
-- Abuse case: scripted rapid-fire presses. Mitigation path: add rate limiting middleware or edge WAF rules in future iterations.
-- Input validation: mutation clamps `shardHint` to valid numeric range.
+- Trust boundary: public client to Convex public action with server-only secret verification.
+- Abuse case: scripted rapid-fire presses.
+  Mitigations: Turnstile challenge verification, one-time token consumption, and per-client rate limiting with temporary blocks.
+- Input validation: action validates token/client fields and mutation clamps `shardHint` to valid numeric range.
 - Secrets: deployment URLs and keys remain in environment variables.
 
 ## Performance Strategy & Budgets
@@ -52,7 +56,6 @@ This experiment validates high-scale write behavior, UX polish under constrained
 - Render budget: single view, minimal re-render tree, no list virtualization needed.
 
 ## Open Questions
-- Do we need anti-bot protections for public launch?
 - Should counter resets/epochs be supported later?
 
 ## Risks & Mitigations
@@ -70,4 +73,4 @@ This experiment validates high-scale write behavior, UX polish under constrained
 
 ## Next Steps
 - Complete cloud Convex provisioning when project quota is available.
-- Add abuse controls if exposed publicly.
+- Set `TURNSTILE_SECRET_KEY` and `TURNSTILE_EXPECTED_HOSTNAME` on cloud deployment before broad release.
