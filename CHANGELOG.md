@@ -34,3 +34,4 @@
 - Added progressive mechanics by level: horizontal slide, random teleporting, camouflage styling, and shrinking click windows.
 - Added continuous logo rotation (360 degrees every 3 seconds, infinite loop).
 - Reworked the global count display into an old-school rolling digit reel animation.
+- Rewrote all 600 taunt/response lines with coherent insult punchlines (removed random-word tag combos).
