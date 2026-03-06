@@ -15,138 +15,33 @@ import { Modal } from "./components/modal";
 import { RollingCounter } from "./components/rolling-counter";
 import { TileHeader } from "./components/tile-header";
 import { PRESS_RESPONSE_LINES, TAUNT_LINES } from "./lib/button-voice";
+import { getLevelDifficulty } from "./lib/level-engine";
 
 const MESSAGE_VISIBLE_MS = 6_000;
 const MESSAGE_GAP_MS = 2_000;
 const ROUND_TIME_LIMIT_MS = 10_000;
 const ROUND_TICK_MS = 100;
+const DEFAULT_BUTTON_WIDTH_PX = 184;
+const DEFAULT_BUTTON_HEIGHT_PX = 58;
 
-const CENTER_BUTTON_POSITION = { x: 50, y: 50 };
-
-type LevelProfile = {
-  title: string;
-  slide: boolean;
-  teleport: boolean;
-  camouflage: boolean;
-  slideDistancePx: number;
-  slideDurationMs: number;
-  teleportIntervalMs: number;
-  windowOpenMs: number;
-  windowCycleMs: number;
+type ButtonPosition = {
+  x: number;
+  y: number;
 };
 
-const LEVEL_PROFILES: LevelProfile[] = [
-  {
-    title: "Won't get easier",
-    slide: false,
-    teleport: false,
-    camouflage: false,
-    slideDistancePx: 0,
-    slideDurationMs: 0,
-    teleportIntervalMs: 0,
-    windowOpenMs: 60_000,
-    windowCycleMs: 60_000,
-  },
-  {
-    title: "If this misses, stretch first",
-    slide: true,
-    teleport: false,
-    camouflage: false,
-    slideDistancePx: 24,
-    slideDurationMs: 1600,
-    teleportIntervalMs: 0,
-    windowOpenMs: 60_000,
-    windowCycleMs: 60_000,
-  },
-  {
-    title: "Now it wanders",
-    slide: false,
-    teleport: true,
-    camouflage: false,
-    slideDistancePx: 0,
-    slideDurationMs: 0,
-    teleportIntervalMs: 5_000,
-    windowOpenMs: 60_000,
-    windowCycleMs: 60_000,
-  },
-  {
-    title: "Camouflage class begins",
-    slide: false,
-    teleport: true,
-    camouflage: true,
-    slideDistancePx: 0,
-    slideDurationMs: 0,
-    teleportIntervalMs: 4_500,
-    windowOpenMs: 5_500,
-    windowCycleMs: 8_000,
-  },
-  {
-    title: "Blink and miss",
-    slide: true,
-    teleport: true,
-    camouflage: true,
-    slideDistancePx: 30,
-    slideDurationMs: 1100,
-    teleportIntervalMs: 4_000,
-    windowOpenMs: 4_800,
-    windowCycleMs: 8_000,
-  },
-  {
-    title: "This one laughs at precision",
-    slide: true,
-    teleport: true,
-    camouflage: true,
-    slideDistancePx: 34,
-    slideDurationMs: 960,
-    teleportIntervalMs: 3_300,
-    windowOpenMs: 4_100,
-    windowCycleMs: 8_000,
-  },
-  {
-    title: "You wanted hard mode",
-    slide: true,
-    teleport: true,
-    camouflage: true,
-    slideDistancePx: 38,
-    slideDurationMs: 860,
-    teleportIntervalMs: 2_900,
-    windowOpenMs: 3_500,
-    windowCycleMs: 8_000,
-  },
-  {
-    title: "Tiny target, giant ego",
-    slide: true,
-    teleport: true,
-    camouflage: true,
-    slideDistancePx: 42,
-    slideDurationMs: 740,
-    teleportIntervalMs: 2_500,
-    windowOpenMs: 2_900,
-    windowCycleMs: 8_000,
-  },
-  {
-    title: "Nerves are now required",
-    slide: true,
-    teleport: true,
-    camouflage: true,
-    slideDistancePx: 48,
-    slideDurationMs: 680,
-    teleportIntervalMs: 2_100,
-    windowOpenMs: 2_300,
-    windowCycleMs: 8_000,
-  },
-  {
-    title: "Legendary nonsense mode",
-    slide: true,
-    teleport: true,
-    camouflage: true,
-    slideDistancePx: 54,
-    slideDurationMs: 620,
-    teleportIntervalMs: 1_800,
-    windowOpenMs: 1_800,
-    windowCycleMs: 8_000,
-  },
-];
+function getViewportCenterPosition(): ButtonPosition {
+  if (typeof window === "undefined") {
+    return {
+      x: DEFAULT_BUTTON_WIDTH_PX / 2,
+      y: DEFAULT_BUTTON_HEIGHT_PX / 2,
+    };
+  }
+
+  return {
+    x: window.innerWidth / 2,
+    y: window.innerHeight / 2,
+  };
+}
 
 function joinClasses(...tokens: Array<string | false>): string {
   return tokens.filter(Boolean).join(" ");
@@ -155,6 +50,7 @@ function joinClasses(...tokens: Array<string | false>): string {
 /** Main single-screen interaction for the PulsePress counter experiment. */
 function App() {
   const stageRef = useRef<HTMLElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
   const tauntStartTimeoutRef = useRef<number | null>(null);
   const tauntIntervalRef = useRef<number | null>(null);
   const bubbleHideTimeoutRef = useRef<number | null>(null);
@@ -173,7 +69,9 @@ function App() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [pendingPresses, setPendingPresses] = useState(0);
   const [bubbleLine, setBubbleLine] = useState<string | null>(null);
-  const [buttonPosition, setButtonPosition] = useState(CENTER_BUTTON_POSITION);
+  const [buttonPosition, setButtonPosition] = useState<ButtonPosition>(() =>
+    getViewportCenterPosition(),
+  );
   const [isWindowOpen, setIsWindowOpen] = useState(true);
   const [levelNumber, setLevelNumber] = useState(1);
   const [roundBestLevel, setRoundBestLevel] = useState(1);
@@ -193,8 +91,7 @@ function App() {
   const reportHighestLevel = useMutation(api.counter.reportHighestLevel);
   const addLevelWinner = useMutation(api.counter.addLevelWinner);
 
-  const profileIndex = Math.min(levelNumber - 1, LEVEL_PROFILES.length - 1);
-  const levelProfile = LEVEL_PROFILES[profileIndex] ?? LEVEL_PROFILES[0];
+  const levelProfile = useMemo(() => getLevelDifficulty(levelNumber), [levelNumber]);
   const isClickWindowOpen = levelProfile.windowOpenMs >= levelProfile.windowCycleMs || isWindowOpen;
   const highestRecordedLevel = highestLevelRecord?.highestLevel ?? 1;
   const latestWinner = winners?.[0] ?? null;
@@ -296,11 +193,23 @@ function App() {
     setRoundTimeRemainingMs(ROUND_TIME_LIMIT_MS);
   }, []);
 
-  const randomButtonPosition = useCallback(() => {
-    const x = 18 + Math.random() * 64;
-    const y = 26 + Math.random() * 48;
-    return { x, y };
-  }, []);
+  const randomButtonPosition = useCallback((): ButtonPosition => {
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+    const buttonRect = buttonRef.current?.getBoundingClientRect();
+    const halfWidth = Math.max(
+      (buttonRect?.width ?? DEFAULT_BUTTON_WIDTH_PX) / 2 + levelProfile.slideDistancePx,
+      8,
+    );
+    const halfHeight = Math.max((buttonRect?.height ?? DEFAULT_BUTTON_HEIGHT_PX) / 2, 8);
+    const travelWidth = Math.max(0, viewportWidth - halfWidth * 2);
+    const travelHeight = Math.max(0, viewportHeight - halfHeight * 2);
+
+    return {
+      x: halfWidth + Math.random() * travelWidth,
+      y: halfHeight + Math.random() * travelHeight,
+    };
+  }, [levelProfile.slideDistancePx]);
 
   const showTaunt = useCallback(() => {
     setBubbleLine(getNextTaunt());
@@ -329,7 +238,7 @@ function App() {
     setRoundBestLevel(1);
     highestRoundLevelRef.current = 1;
     setIsWindowOpen(true);
-    setButtonPosition(CENTER_BUTTON_POSITION);
+    setButtonPosition(getViewportCenterPosition());
   }, []);
 
   const finishRound = useCallback(() => {
@@ -550,13 +459,47 @@ function App() {
       });
   };
 
-  const position = levelProfile.teleport ? buttonPosition : CENTER_BUTTON_POSITION;
-  const buttonStyle: CSSProperties & Record<string, string> = {
-    left: `${position.x}%`,
-    top: `${position.y}%`,
+  const inTileButtonAnchorStyle: CSSProperties & Record<string, string> = {
+    left: "50%",
+    top: "50%",
     "--slide-distance": `${levelProfile.slideDistancePx}px`,
     "--slide-duration": `${levelProfile.slideDurationMs}ms`,
   };
+  const viewportButtonAnchorStyle: CSSProperties & Record<string, string> = {
+    left: `${buttonPosition.x}px`,
+    top: `${buttonPosition.y}px`,
+    "--slide-distance": `${levelProfile.slideDistancePx}px`,
+    "--slide-duration": `${levelProfile.slideDurationMs}ms`,
+  };
+  const buttonStyle: CSSProperties & Record<string, string> = {
+    "--pulse-min-scale": `${levelProfile.pulseMinScale}`,
+    "--pulse-duration": `${levelProfile.pulseDurationMs}ms`,
+  };
+  const buttonAnchorClassName = joinClasses(
+    "press-button-anchor",
+    levelProfile.slide && "is-sliding",
+  );
+  const buttonClassName = joinClasses(
+    "press-button",
+    levelProfile.pulse && "is-pulsing",
+    levelProfile.camouflage && "is-camouflage",
+    isClickWindowOpen ? "is-open" : "is-closed",
+  );
+
+  const renderPressButton = (anchorStyle: CSSProperties & Record<string, string>) => (
+    <div className={buttonAnchorClassName} style={anchorStyle}>
+      <button
+        ref={buttonRef}
+        className={buttonClassName}
+        style={buttonStyle}
+        type="button"
+        onClick={handlePress}
+        disabled={!counter || !isClickWindowOpen || isWinnerModalOpen}
+      >
+        Press
+      </button>
+    </div>
+  );
 
   return (
     <main ref={stageRef} className="press-root">
@@ -590,21 +533,11 @@ function App() {
         </div>
 
         <div className="press-action-zone">
-          <button
-            className={joinClasses(
-              "press-button",
-              levelProfile.slide && "is-sliding",
-              levelProfile.camouflage && "is-camouflage",
-              isClickWindowOpen ? "is-open" : "is-closed",
-            )}
-            style={buttonStyle}
-            type="button"
-            onClick={handlePress}
-            disabled={!counter || !isClickWindowOpen || isWinnerModalOpen}
-          >
-            Press
-          </button>
+          {!levelProfile.teleport ? renderPressButton(inTileButtonAnchorStyle) : null}
         </div>
+        {levelProfile.teleport ? (
+          <div className="press-viewport-zone">{renderPressButton(viewportButtonAnchorStyle)}</div>
+        ) : null}
 
         <p className="press-meta">Global press stream is live.</p>
         <p className="press-description">

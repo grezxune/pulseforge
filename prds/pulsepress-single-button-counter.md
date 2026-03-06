@@ -18,6 +18,8 @@ log:
   - 2026-03-06: Prevented remaining counter numeral clipping by increasing slot width and limiting reel overflow masking to the vertical axis.
   - 2026-03-06: Rebuilt top-of-tile stats into a cohesive game HUD header for clock, round, run metrics, world record, and latest winner visibility.
   - 2026-03-06: Removed the lower "Recent World Winners" tile and kept winner visibility in the HUD-only latest winner slot.
+  - 2026-03-06: Replaced fixed level presets with an infinite scaling difficulty engine, viewport-wide teleporting, and level-driven button size pulse animation.
+  - 2026-03-06: Added fairness guardrails to the infinite scaling engine to prevent impossible rounds (bounded closed-window gap, teleport cadence, pulse scale, and pulse speed).
 ---
 
 ## Problem
@@ -49,7 +51,10 @@ This experiment validates high-scale write behavior, UX polish under constrained
   - Copy constraint: every taunt/response line must be 15 words or fewer.
 - Add local per-client level progression that increases UI click difficulty as local presses increase.
   - Include level labels in the format `Level N - {taunt title}`.
-  - Difficulty mechanics may include sliding, teleporting, camouflage contrast reduction, and tighter click windows.
+  - Difficulty mechanics include sliding, teleporting, camouflage contrast reduction, tighter click windows, and level-driven button size pulsing.
+  - Difficulty must be generated algorithmically per level (no fixed max profile list), with continued scaling after level 10.
+  - Teleport movement must use full viewport coordinates rather than a constrained center tile region.
+  - Fairness guardrail: difficulty tuning must preserve click opportunity in each 10-second round by bounding hidden/closed durations and animation cadence so interaction remains possible.
 - Store and display the highest level record achieved using a dedicated Convex table.
 - Treat each button press as exactly one level advancement.
 - Start a 10-second round timer after the first successful press of a run.

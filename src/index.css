@@ -443,11 +443,38 @@ body::before {
   height: 8.3rem;
 }
 
-.press-button {
+.press-viewport-zone {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 5;
+}
+
+.press-button-anchor {
   position: absolute;
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
+  transition:
+    left 220ms ease,
+    top 220ms ease;
+}
+
+.press-button-anchor.is-sliding {
+  animation: press-slide-x var(--slide-duration) ease-in-out infinite alternate;
+}
+
+@keyframes press-slide-x {
+  from {
+    transform: translate(calc(-50% - var(--slide-distance)), -50%);
+  }
+
+  to {
+    transform: translate(calc(-50% + var(--slide-distance)), -50%);
+  }
+}
+
+.press-button {
   appearance: none;
   border: 1px solid transparent;
   border-radius: 999px;
@@ -462,29 +489,30 @@ body::before {
   box-shadow:
     0 15px 25px -15px rgba(230, 59, 46, 0.85),
     0 8px 24px -18px rgba(0, 0, 0, 0.75);
+  pointer-events: auto;
   cursor: pointer;
   transition:
-    left 220ms ease,
-    top 220ms ease,
     opacity 180ms ease,
     filter 240ms ease,
+    transform 180ms ease,
     box-shadow 240ms ease,
     border-color 220ms ease,
     color 220ms ease,
     background-color 220ms ease;
 }
 
-.press-button.is-sliding {
-  animation: press-slide-x var(--slide-duration) ease-in-out infinite alternate;
+.press-button.is-pulsing {
+  animation: press-size-pulse var(--pulse-duration) ease-in-out infinite;
 }
 
-@keyframes press-slide-x {
-  from {
-    transform: translate(calc(-50% - var(--slide-distance)), -50%);
+@keyframes press-size-pulse {
+  0%,
+  100% {
+    transform: scale(1);
   }
 
-  to {
-    transform: translate(calc(-50% + var(--slide-distance)), -50%);
+  50% {
+    transform: scale(var(--pulse-min-scale));
   }
 }
 
@@ -695,10 +723,16 @@ body::before {
     animation-duration: 12s;
   }
 
+  .press-button-anchor.is-sliding,
+  .press-button.is-pulsing {
+    animation: none;
+  }
+
   .press-count-reel {
     transition-duration: 220ms;
   }
 
+  .press-button-anchor,
   .press-button,
   .press-github,
   .press-bubble,

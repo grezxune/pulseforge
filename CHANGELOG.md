@@ -49,3 +49,9 @@
 - Fixed Convex winner-feed query validation by including `_creationTime` in `counter:getLevelWinners` return schema to prevent post-save client crashes.
 - Redesigned the tile-top telemetry into a cohesive game-style HUD header covering clock, round status, run clicks, run best, world record, and latest winner.
 - Removed the lower `Recent World Winners` tile and consolidated winner visibility to the HUD `Latest Winner` line.
+- Added deployment scripts for Convex environments: `convex:dev` for dev pushes and `deploy` for production pushes.
+- Replaced fixed level presets with an algorithmic infinite-scaling difficulty engine while preserving early-level titles.
+- Expanded teleport movement to full-viewport positioning instead of center-tile-only movement bounds.
+- Added level-scaled button pulse animation (shrinks then returns to normal) with varying speed by level.
+- Added fairness guardrails to high-level difficulty so the button cannot stay unavailable too long and animation speed/size remain clickable.
+- Added high-level engine tests (up to level 5000) to enforce visibility-window and interaction fairness constraints.

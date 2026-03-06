@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "convex:dev": "convex dev",
+    "deploy": "convex deploy -y",
     "build": "tsc -b && vite build",
     "typecheck": "tsc -b",
     "lint": "eslint .",

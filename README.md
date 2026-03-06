@@ -19,7 +19,8 @@ Use `.env.example` as the baseline for required env variables.
 
 ## Scripts
 - `bun run dev` - start Vite dev server
-- `bun run convex:dev` - run Convex dev server
+- `bun run convex:dev` - push/watch functions against the configured Convex dev deployment
+- `bun run deploy` - push functions to the Convex production deployment
 - `bun run lint` - run ESLint
 - `bun run typecheck` - run TypeScript checks
 - `bun run test` - run unit + integration tests
