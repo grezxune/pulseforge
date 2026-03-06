@@ -1,15 +1,24 @@
 import { gsap } from "gsap";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "../convex/_generated/api";
 import { formatCount } from "./lib/count-format";
+import { PRESS_RESPONSE_LINES, TAUNT_LINES } from "./lib/button-voice";
+
+const TAUNT_INTERVAL_MS = 3_200;
+const TAUNT_RESUME_DELAY_MS = 5_000;
 
 /** Main single-screen interaction for the PulseForge counter experiment. */
 function App() {
   const stageRef = useRef<HTMLElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
+  const tauntIntervalRef = useRef<number | null>(null);
+  const tauntResumeTimeoutRef = useRef<number | null>(null);
+  const tauntDeckRef = useRef<number[]>([]);
+  const responseDeckRef = useRef<number[]>([]);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [pendingPresses, setPendingPresses] = useState(0);
+  const [bubbleLine, setBubbleLine] = useState(TAUNT_LINES[0]);
 
   const counter = useQuery(api.counter.getTotal);
   const increment = useMutation(api.counter.increment);
@@ -18,6 +27,63 @@ function App() {
     () => (counter?.total ?? 0) + pendingPresses,
     [counter?.total, pendingPresses],
   );
+
+  const drawLineFromDeck = useCallback((lines: string[], deckRef: { current: number[] }) => {
+    if (deckRef.current.length === 0) {
+      const freshDeck = Array.from({ length: lines.length }, (_, index) => index);
+
+      for (let index = freshDeck.length - 1; index > 0; index -= 1) {
+        const swapIndex = Math.floor(Math.random() * (index + 1));
+        [freshDeck[index], freshDeck[swapIndex]] = [freshDeck[swapIndex], freshDeck[index]];
+      }
+
+      deckRef.current = freshDeck;
+    }
+
+    const nextIndex = deckRef.current.shift();
+    if (nextIndex === undefined) {
+      return lines[0];
+    }
+
+    return lines[nextIndex];
+  }, []);
+
+  const getNextTaunt = useCallback(
+    () => drawLineFromDeck(TAUNT_LINES, tauntDeckRef),
+    [drawLineFromDeck],
+  );
+
+  const getNextResponse = useCallback(
+    () => drawLineFromDeck(PRESS_RESPONSE_LINES, responseDeckRef),
+    [drawLineFromDeck],
+  );
+
+  const clearVoiceTimers = useCallback(() => {
+    if (tauntIntervalRef.current !== null) {
+      window.clearInterval(tauntIntervalRef.current);
+      tauntIntervalRef.current = null;
+    }
+
+    if (tauntResumeTimeoutRef.current !== null) {
+      window.clearTimeout(tauntResumeTimeoutRef.current);
+      tauntResumeTimeoutRef.current = null;
+    }
+  }, []);
+
+  const startTauntInterval = useCallback(() => {
+    if (tauntIntervalRef.current !== null) {
+      window.clearInterval(tauntIntervalRef.current);
+    }
+
+    tauntIntervalRef.current = window.setInterval(() => {
+      setBubbleLine(getNextTaunt());
+    }, TAUNT_INTERVAL_MS);
+  }, [getNextTaunt]);
+
+  const resumeTauntsNow = useCallback(() => {
+    setBubbleLine(getNextTaunt());
+    startTauntInterval();
+  }, [getNextTaunt, startTauntInterval]);
 
   useEffect(() => {
     const stage = stageRef.current;
@@ -42,6 +108,11 @@ function App() {
 
     return () => ctx.revert();
   }, []);
+
+  useEffect(() => {
+    startTauntInterval();
+    return () => clearVoiceTimers();
+  }, [clearVoiceTimers, startTauntInterval]);
 
   useEffect(() => {
     const button = buttonRef.current;
@@ -87,6 +158,19 @@ function App() {
       return;
     }
 
+    if (tauntIntervalRef.current !== null) {
+      window.clearInterval(tauntIntervalRef.current);
+      tauntIntervalRef.current = null;
+    }
+    if (tauntResumeTimeoutRef.current !== null) {
+      window.clearTimeout(tauntResumeTimeoutRef.current);
+    }
+
+    setBubbleLine(getNextResponse());
+    tauntResumeTimeoutRef.current = window.setTimeout(() => {
+      resumeTauntsNow();
+    }, TAUNT_RESUME_DELAY_MS);
+
     setErrorMessage(null);
     setPendingPresses((count) => count + 1);
 
@@ -111,6 +195,9 @@ function App() {
         </div>
         <p className="press-label">PulseForge</p>
         <p className="press-count">{counter ? formatCount(displayCount) : "..."}</p>
+        <p className="press-bubble" aria-hidden="true">
+          {bubbleLine}
+        </p>
 
         <button
           ref={buttonRef}

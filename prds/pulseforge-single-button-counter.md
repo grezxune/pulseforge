@@ -9,6 +9,7 @@ log:
   - 2026-03-05: Added bot protection with Turnstile verification, token replay prevention, and server-side rate limiting.
   - 2026-03-06: Removed Turnstile/captcha integration and removed remaining bot-rate-limit table usage.
   - 2026-03-06: Added comprehensive SEO/distribution metadata (Open Graph, Twitter cards, canonical tags, JSON-LD, sitemap, robots, and web manifest).
+  - 2026-03-06: Added button speech-bubble behavior with large taunt/response phrase pools and idle-aware timing.
 ---
 
 ## Problem
@@ -33,6 +34,7 @@ This experiment validates high-scale write behavior, UX polish under constrained
 - Show loading and error feedback.
 - Provide matching logo + favicon.
 - Publish complete SEO/share metadata for social cards and crawler indexing.
+- Display a button speech bubble that taunts periodically and reacts to presses.
 
 ## Non-functional Requirements
 - Mobile and desktop responsive.

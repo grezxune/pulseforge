@@ -131,6 +131,40 @@ body::before {
   line-height: 1;
 }
 
+.press-bubble {
+  position: relative;
+  margin: 0.15rem 0 0;
+  min-height: 3.4rem;
+  width: min(30ch, 100%);
+  padding: 0.7rem 0.95rem;
+  border-radius: 1rem;
+  border: 1px solid color-mix(in srgb, var(--soft-border), transparent 8%);
+  background:
+    linear-gradient(
+      140deg,
+      color-mix(in srgb, var(--card-bg), transparent 10%),
+      color-mix(in srgb, var(--ink), transparent 93%)
+    );
+  box-shadow: 0 10px 24px -18px var(--shadow-color);
+  font-size: 0.84rem;
+  line-height: 1.35;
+  color: var(--text-main);
+  text-align: left;
+}
+
+.press-bubble::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -0.42rem;
+  width: 0.7rem;
+  height: 0.7rem;
+  border-right: 1px solid color-mix(in srgb, var(--soft-border), transparent 10%);
+  border-bottom: 1px solid color-mix(in srgb, var(--soft-border), transparent 10%);
+  background: color-mix(in srgb, var(--card-bg), transparent 7%);
+  transform: translateX(-50%) rotate(45deg);
+}
+
 .press-button {
   appearance: none;
   border: none;

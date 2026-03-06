@@ -23,3 +23,6 @@
 - Added comprehensive SEO/share metadata (canonical, robots, Open Graph, Twitter cards, and JSON-LD).
 - Added `robots.txt`, `sitemap.xml`, and `site.webmanifest` for indexing/distribution.
 - Added a dedicated social preview image (`og-image.png`) and stamped it with the live global count.
+- Added an interactive chat bubble voice system for the button with rotating taunts and post-click reactions.
+- Added 300 taunt lines and 300 click-response lines via phrase pools with non-repeating shuffled playback.
+- Added timing behavior: taunts rotate every few seconds, pause immediately after click, and resume after 5 seconds of idle time.
