@@ -1,5 +1,5 @@
 import { gsap } from "gsap";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { type CSSProperties, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "../convex/_generated/api";
 import { formatCount } from "./lib/count-format";
@@ -7,22 +7,164 @@ import { PRESS_RESPONSE_LINES, TAUNT_LINES } from "./lib/button-voice";
 
 const MESSAGE_VISIBLE_MS = 6_000;
 const MESSAGE_GAP_MS = 2_000;
+const CLICKS_PER_LEVEL = 6;
+
+type LevelProfile = {
+  title: string;
+  slide: boolean;
+  teleport: boolean;
+  camouflage: boolean;
+  slideDistancePx: number;
+  slideDurationMs: number;
+  teleportIntervalMs: number;
+  windowOpenMs: number;
+  windowCycleMs: number;
+};
+
+const LEVEL_PROFILES: LevelProfile[] = [
+  {
+    title: "Won't get easier",
+    slide: false,
+    teleport: false,
+    camouflage: false,
+    slideDistancePx: 0,
+    slideDurationMs: 0,
+    teleportIntervalMs: 0,
+    windowOpenMs: 60_000,
+    windowCycleMs: 60_000,
+  },
+  {
+    title: "If this misses, stretch first",
+    slide: true,
+    teleport: false,
+    camouflage: false,
+    slideDistancePx: 24,
+    slideDurationMs: 1600,
+    teleportIntervalMs: 0,
+    windowOpenMs: 60_000,
+    windowCycleMs: 60_000,
+  },
+  {
+    title: "Now it wanders",
+    slide: false,
+    teleport: true,
+    camouflage: false,
+    slideDistancePx: 0,
+    slideDurationMs: 0,
+    teleportIntervalMs: 5_000,
+    windowOpenMs: 60_000,
+    windowCycleMs: 60_000,
+  },
+  {
+    title: "Camouflage class begins",
+    slide: false,
+    teleport: true,
+    camouflage: true,
+    slideDistancePx: 0,
+    slideDurationMs: 0,
+    teleportIntervalMs: 4_500,
+    windowOpenMs: 5_500,
+    windowCycleMs: 8_000,
+  },
+  {
+    title: "Blink and miss",
+    slide: true,
+    teleport: true,
+    camouflage: true,
+    slideDistancePx: 30,
+    slideDurationMs: 1100,
+    teleportIntervalMs: 4_000,
+    windowOpenMs: 4_800,
+    windowCycleMs: 8_000,
+  },
+  {
+    title: "This one laughs at precision",
+    slide: true,
+    teleport: true,
+    camouflage: true,
+    slideDistancePx: 34,
+    slideDurationMs: 960,
+    teleportIntervalMs: 3_300,
+    windowOpenMs: 4_100,
+    windowCycleMs: 8_000,
+  },
+  {
+    title: "You wanted hard mode",
+    slide: true,
+    teleport: true,
+    camouflage: true,
+    slideDistancePx: 38,
+    slideDurationMs: 860,
+    teleportIntervalMs: 2_900,
+    windowOpenMs: 3_500,
+    windowCycleMs: 8_000,
+  },
+  {
+    title: "Tiny target, giant ego",
+    slide: true,
+    teleport: true,
+    camouflage: true,
+    slideDistancePx: 42,
+    slideDurationMs: 740,
+    teleportIntervalMs: 2_500,
+    windowOpenMs: 2_900,
+    windowCycleMs: 8_000,
+  },
+  {
+    title: "Nerves are now required",
+    slide: true,
+    teleport: true,
+    camouflage: true,
+    slideDistancePx: 48,
+    slideDurationMs: 680,
+    teleportIntervalMs: 2_100,
+    windowOpenMs: 2_300,
+    windowCycleMs: 8_000,
+  },
+  {
+    title: "Legendary nonsense mode",
+    slide: true,
+    teleport: true,
+    camouflage: true,
+    slideDistancePx: 54,
+    slideDurationMs: 620,
+    teleportIntervalMs: 1_800,
+    windowOpenMs: 1_800,
+    windowCycleMs: 8_000,
+  },
+];
+
+function joinClasses(...tokens: Array<string | false>): string {
+  return tokens.filter(Boolean).join(" ");
+}
 
 /** Main single-screen interaction for the PulseForge counter experiment. */
 function App() {
   const stageRef = useRef<HTMLElement>(null);
-  const buttonRef = useRef<HTMLButtonElement>(null);
   const tauntStartTimeoutRef = useRef<number | null>(null);
   const tauntIntervalRef = useRef<number | null>(null);
   const bubbleHideTimeoutRef = useRef<number | null>(null);
+  const teleportKickoffTimeoutRef = useRef<number | null>(null);
+  const windowCycleKickoffTimeoutRef = useRef<number | null>(null);
+  const teleportIntervalRef = useRef<number | null>(null);
+  const windowCycleIntervalRef = useRef<number | null>(null);
+  const windowCloseTimeoutRef = useRef<number | null>(null);
   const tauntDeckRef = useRef<number[]>([]);
   const responseDeckRef = useRef<number[]>([]);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [pendingPresses, setPendingPresses] = useState(0);
+  const [localPresses, setLocalPresses] = useState(0);
   const [bubbleLine, setBubbleLine] = useState<string | null>(null);
+  const [buttonPosition, setButtonPosition] = useState({ x: 50, y: 50 });
+  const [isWindowOpen, setIsWindowOpen] = useState(true);
 
   const counter = useQuery(api.counter.getTotal);
   const increment = useMutation(api.counter.increment);
+  const levelNumber = Math.min(
+    LEVEL_PROFILES.length,
+    Math.floor(localPresses / CLICKS_PER_LEVEL) + 1,
+  );
+  const levelProfile = LEVEL_PROFILES[levelNumber - 1] ?? LEVEL_PROFILES[0];
 
   const displayCount = useMemo(
     () => (counter?.total ?? 0) + pendingPresses,
@@ -76,6 +218,39 @@ function App() {
     }
   }, []);
 
+  const clearDifficultyTimers = useCallback(() => {
+    if (teleportKickoffTimeoutRef.current !== null) {
+      window.clearTimeout(teleportKickoffTimeoutRef.current);
+      teleportKickoffTimeoutRef.current = null;
+    }
+
+    if (windowCycleKickoffTimeoutRef.current !== null) {
+      window.clearTimeout(windowCycleKickoffTimeoutRef.current);
+      windowCycleKickoffTimeoutRef.current = null;
+    }
+
+    if (teleportIntervalRef.current !== null) {
+      window.clearInterval(teleportIntervalRef.current);
+      teleportIntervalRef.current = null;
+    }
+
+    if (windowCycleIntervalRef.current !== null) {
+      window.clearInterval(windowCycleIntervalRef.current);
+      windowCycleIntervalRef.current = null;
+    }
+
+    if (windowCloseTimeoutRef.current !== null) {
+      window.clearTimeout(windowCloseTimeoutRef.current);
+      windowCloseTimeoutRef.current = null;
+    }
+  }, []);
+
+  const randomButtonPosition = useCallback(() => {
+    const x = 18 + Math.random() * 64;
+    const y = 26 + Math.random() * 48;
+    return { x, y };
+  }, []);
+
   const showTaunt = useCallback(() => {
     setBubbleLine(getNextTaunt());
     if (bubbleHideTimeoutRef.current !== null) {
@@ -127,50 +302,45 @@ function App() {
   }, [clearVoiceTimers, startTauntLoop]);
 
   useEffect(() => {
-    const button = buttonRef.current;
-    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    clearDifficultyTimers();
 
-    if (!button || reducedMotion) {
-      return;
+    if (levelProfile.teleport) {
+      const moveButton = () => setButtonPosition(randomButtonPosition());
+      teleportKickoffTimeoutRef.current = window.setTimeout(moveButton, 0);
+      teleportIntervalRef.current = window.setInterval(
+        moveButton,
+        levelProfile.teleportIntervalMs,
+      );
     }
 
-    const onMove = (event: PointerEvent) => {
-      const rect = button.getBoundingClientRect();
-      const offsetX = (event.clientX - rect.left) / rect.width - 0.5;
-      const offsetY = (event.clientY - rect.top) / rect.height - 0.5;
+    if (levelProfile.windowOpenMs < levelProfile.windowCycleMs) {
+      const runWindowCycle = () => {
+        setIsWindowOpen(true);
+        if (windowCloseTimeoutRef.current !== null) {
+          window.clearTimeout(windowCloseTimeoutRef.current);
+        }
+        windowCloseTimeoutRef.current = window.setTimeout(() => {
+          setIsWindowOpen(false);
+        }, levelProfile.windowOpenMs);
+      };
 
-      gsap.to(button, {
-        x: offsetX * 8,
-        y: offsetY * 8,
-        duration: 0.25,
-        ease: "power3.out",
-      });
-    };
+      windowCycleKickoffTimeoutRef.current = window.setTimeout(runWindowCycle, 0);
+      windowCycleIntervalRef.current = window.setInterval(
+        runWindowCycle,
+        levelProfile.windowCycleMs,
+      );
+    }
 
-    const onLeave = () => {
-      gsap.to(button, {
-        x: 0,
-        y: 0,
-        duration: 0.35,
-        ease: "power3.out",
-      });
-    };
-
-    button.addEventListener("pointermove", onMove);
-    button.addEventListener("pointerleave", onLeave);
-
-    return () => {
-      button.removeEventListener("pointermove", onMove);
-      button.removeEventListener("pointerleave", onLeave);
-    };
-  }, []);
+    return () => clearDifficultyTimers();
+  }, [clearDifficultyTimers, levelProfile, randomButtonPosition]);
 
   const handlePress = () => {
-    if (!counter) {
+    if (!counter || !isWindowOpen) {
       return;
     }
 
     clearVoiceTimers();
+    setLocalPresses((count) => count + 1);
 
     setBubbleLine(getNextResponse());
     bubbleHideTimeoutRef.current = window.setTimeout(() => {
@@ -194,6 +364,14 @@ function App() {
       });
   };
 
+  const position = levelProfile.teleport ? buttonPosition : { x: 50, y: 50 };
+  const buttonStyle: CSSProperties & Record<string, string> = {
+    left: `${position.x}%`,
+    top: `${position.y}%`,
+    "--slide-distance": `${levelProfile.slideDistancePx}px`,
+    "--slide-duration": `${levelProfile.slideDurationMs}ms`,
+  };
+
   return (
     <main ref={stageRef} className="press-root">
       <section className="press-shell" aria-live="polite">
@@ -201,6 +379,9 @@ function App() {
           <img src="/logo.png" alt="PulseForge logo" className="press-mark" />
         </div>
         <p className="press-label">PulseForge</p>
+        <p className="press-level">
+          {`Level ${levelNumber} - ${levelProfile.title}`}
+        </p>
         <p className="press-count">{counter ? formatCount(displayCount) : "..."}</p>
         <div className="press-bubble-slot" aria-hidden="true">
           <p className={`press-bubble${bubbleLine ? " is-visible" : ""}`}>
@@ -208,15 +389,22 @@ function App() {
           </p>
         </div>
 
-        <button
-          ref={buttonRef}
-          className="press-button"
-          type="button"
-          onClick={handlePress}
-          disabled={!counter}
-        >
-          Press
-        </button>
+        <div className="press-action-zone">
+          <button
+            className={joinClasses(
+              "press-button",
+              levelProfile.slide && "is-sliding",
+              levelProfile.camouflage && "is-camouflage",
+              isWindowOpen ? "is-open" : "is-closed",
+            )}
+            style={buttonStyle}
+            type="button"
+            onClick={handlePress}
+            disabled={!counter || !isWindowOpen}
+          >
+            Press
+          </button>
+        </div>
 
         <p className="press-meta">Global press stream is live.</p>
         <p className="press-description">

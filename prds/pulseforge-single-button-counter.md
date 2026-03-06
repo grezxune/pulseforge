@@ -10,6 +10,7 @@ log:
   - 2026-03-06: Removed Turnstile/captcha integration and removed remaining bot-rate-limit table usage.
   - 2026-03-06: Added comprehensive SEO/distribution metadata (Open Graph, Twitter cards, canonical tags, JSON-LD, sitemap, robots, and web manifest).
   - 2026-03-06: Added button speech-bubble behavior with large taunt/response phrase pools and idle-aware timing.
+  - 2026-03-06: Added local level progression with escalating click-difficulty mechanics and level taunt titles.
 ---
 
 ## Problem
@@ -39,6 +40,9 @@ This experiment validates high-scale write behavior, UX polish under constrained
   - Layout stability: reserve static bubble height to avoid component movement during message gaps.
   - Content quality: taunt/response pools must have unique lines and unique punchline endings.
   - Copy constraint: every taunt/response line must be 15 words or fewer.
+- Add local per-client level progression that increases UI click difficulty as local presses increase.
+  - Include level labels in the format `Level N - {taunt title}`.
+  - Difficulty mechanics may include sliding, teleporting, camouflage contrast reduction, and tighter click windows.
 
 ## Non-functional Requirements
 - Mobile and desktop responsive.

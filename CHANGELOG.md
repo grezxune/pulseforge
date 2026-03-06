@@ -30,3 +30,5 @@
 - Added a 2-second silent gap between bubble messages and reserved fixed bubble space to prevent layout shift.
 - Rebuilt taunt/response phrase pools to remove repeated punchline endings and enforce uniqueness.
 - Enforced a hard 15-word maximum for every taunt and every click response.
+- Added local per-client level progression with taunting level titles and escalating button difficulty.
+- Added progressive mechanics by level: horizontal slide, random teleporting, camouflage styling, and shrinking click windows.
