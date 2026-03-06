@@ -1,0 +1,149 @@
+@import "@fontsource/space-grotesk/400.css";
+@import "@fontsource/space-grotesk/600.css";
+@import "@fontsource/dm-serif-display/400.css";
+
+:root {
+  --paper: #e8e4dd;
+  --offwhite: #f5f3ee;
+  --ink: #111111;
+  --signal: #e63b2e;
+  --soft-border: rgba(17, 17, 17, 0.15);
+  --app-bg: radial-gradient(circle at 20% 15%, #f6f4ef 0%, #e8e4dd 55%, #ddd8cf 100%);
+  --card-bg: rgba(245, 243, 238, 0.78);
+  --text-main: #111111;
+  --text-muted: rgba(17, 17, 17, 0.72);
+  --button-text: #f5f3ee;
+  --shadow-color: rgba(17, 17, 17, 0.2);
+  color-scheme: light dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --app-bg: radial-gradient(circle at 25% 10%, #262626 0%, #111111 60%, #090909 100%);
+    --card-bg: rgba(21, 21, 21, 0.78);
+    --text-main: #f5f3ee;
+    --text-muted: rgba(245, 243, 238, 0.72);
+    --soft-border: rgba(245, 243, 238, 0.18);
+    --shadow-color: rgba(0, 0, 0, 0.4);
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+}
+
+body {
+  font-family: "Space Grotesk", sans-serif;
+  background: var(--app-bg);
+  color: var(--text-main);
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.06;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)' opacity='.85'/%3E%3C/svg%3E");
+}
+
+.press-root {
+  position: relative;
+  height: 100%;
+  width: 100%;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+}
+
+.press-shell {
+  width: min(560px, 100%);
+  border: 1px solid var(--soft-border);
+  background: var(--card-bg);
+  border-radius: 2.25rem;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 25px 60px -40px var(--shadow-color);
+  display: grid;
+  justify-items: center;
+  row-gap: 0.65rem;
+  text-align: center;
+  padding: clamp(1.5rem, 4vw, 2.5rem);
+}
+
+.press-mark {
+  width: clamp(58px, 10vw, 72px);
+  height: auto;
+}
+
+.press-label {
+  margin: 0;
+  font-family: "DM Serif Display", serif;
+  font-size: clamp(1.05rem, 2.2vw, 1.35rem);
+  letter-spacing: 0.02em;
+}
+
+.press-count {
+  margin: 0;
+  font-size: clamp(2.2rem, 8vw, 3.8rem);
+  font-weight: 600;
+  line-height: 1;
+}
+
+.press-button {
+  appearance: none;
+  border: none;
+  border-radius: 999px;
+  margin-top: 0.35rem;
+  min-width: 11.5rem;
+  padding: 0.9rem 1.5rem;
+  font: inherit;
+  font-weight: 600;
+  color: var(--button-text);
+  background:
+    linear-gradient(120deg, rgba(0, 0, 0, 0.16), rgba(0, 0, 0, 0) 45%),
+    linear-gradient(135deg, #ff5542 0%, var(--signal) 48%, #ba2519 100%);
+  box-shadow:
+    0 15px 25px -15px rgba(230, 59, 46, 0.85),
+    0 8px 24px -18px rgba(0, 0, 0, 0.75);
+  cursor: pointer;
+  transition:
+    transform 240ms cubic-bezier(0.25, 0.46, 0.45, 0.94),
+    filter 240ms ease,
+    box-shadow 240ms ease;
+}
+
+.press-button:hover {
+  filter: saturate(1.1);
+  transform: translateY(-1px) scale(1.03);
+}
+
+.press-button:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--signal), white 18%);
+  outline-offset: 3px;
+}
+
+.press-button:disabled {
+  opacity: 0.65;
+  cursor: wait;
+  transform: none;
+}
+
+.press-meta,
+.press-error {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+.press-error {
+  color: var(--signal);
+}
