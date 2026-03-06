@@ -9,15 +9,14 @@ function App() {
   const stageRef = useRef<HTMLElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [optimisticDelta, setOptimisticDelta] = useState(0);
+  const [pendingPresses, setPendingPresses] = useState(0);
 
   const counter = useQuery(api.counter.getTotal);
   const increment = useMutation(api.counter.increment);
 
   const displayCount = useMemo(
-    () => (counter?.total ?? 0) + optimisticDelta,
-    [counter?.total, optimisticDelta],
+    () => (counter?.total ?? 0) + pendingPresses,
+    [counter?.total, pendingPresses],
   );
 
   useEffect(() => {
@@ -83,28 +82,25 @@ function App() {
     };
   }, []);
 
-  const handlePress = async () => {
-    if (isSubmitting) {
+  const handlePress = () => {
+    if (!counter) {
       return;
     }
 
     setErrorMessage(null);
-    setIsSubmitting(true);
-    setOptimisticDelta((count) => count + 1);
+    setPendingPresses((count) => count + 1);
 
-    try {
-      await increment({});
-      setOptimisticDelta(0);
-    } catch (error) {
-      setOptimisticDelta(0);
-      setErrorMessage(
-        error instanceof Error
-          ? error.message
-          : "Could not register this press. Try again.",
-      );
-    } finally {
-      setIsSubmitting(false);
-    }
+    void increment({})
+      .catch((error) => {
+        setErrorMessage(
+          error instanceof Error
+            ? error.message
+            : "Could not register this press. Try again.",
+        );
+      })
+      .finally(() => {
+        setPendingPresses((count) => Math.max(0, count - 1));
+      });
   };
 
   return (
@@ -119,9 +115,9 @@ function App() {
           className="press-button"
           type="button"
           onClick={handlePress}
-          disabled={isSubmitting || !counter}
+          disabled={!counter}
         >
-          {isSubmitting ? "Registering..." : "Press"}
+          Press
         </button>
 
         <p className="press-meta">Global press stream is live.</p>
