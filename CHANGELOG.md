@@ -12,3 +12,4 @@
 ## 2026-03-06
 - Removed Turnstile/captcha integration from frontend and backend.
 - Kept server-side anti-abuse controls via per-client rate limiting in Convex.
+- Removed remaining bot-rate-limit schema and code paths (`botClients`) and reverted to direct global increment flow.

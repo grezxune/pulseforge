@@ -24,7 +24,6 @@ const mockedUseQuery = vi.mocked(useQuery);
 
 describe("App", () => {
   beforeEach(() => {
-    window.localStorage.clear();
     mockedUseQuery.mockReset();
     mockedUseMutation.mockReset();
   });
@@ -55,9 +54,7 @@ describe("App", () => {
     fireEvent.click(screen.getByRole("button", { name: "Press" }));
 
     await waitFor(() => {
-      expect(increment).toHaveBeenCalledWith({
-        clientId: expect.any(String),
-      });
+      expect(increment).toHaveBeenCalledWith({});
     });
   });
 });

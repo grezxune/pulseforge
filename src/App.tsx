@@ -2,7 +2,6 @@ import { gsap } from "gsap";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "../convex/_generated/api";
-import { getOrCreateClientId } from "./lib/client-id";
 import { formatCount } from "./lib/count-format";
 
 /** Main single-screen interaction for the PulseForge counter experiment. */
@@ -12,7 +11,6 @@ function App() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [optimisticDelta, setOptimisticDelta] = useState(0);
-  const [clientId, setClientId] = useState<string | null>(null);
 
   const counter = useQuery(api.counter.getTotal);
   const increment = useMutation(api.counter.increment);
@@ -21,10 +19,6 @@ function App() {
     () => (counter?.total ?? 0) + optimisticDelta,
     [counter?.total, optimisticDelta],
   );
-
-  useEffect(() => {
-    setClientId(getOrCreateClientId());
-  }, []);
 
   useEffect(() => {
     const stage = stageRef.current;
@@ -90,7 +84,7 @@ function App() {
   }, []);
 
   const handlePress = async () => {
-    if (isSubmitting || !clientId) {
+    if (isSubmitting) {
       return;
     }
 
@@ -99,9 +93,7 @@ function App() {
     setOptimisticDelta((count) => count + 1);
 
     try {
-      await increment({
-        clientId,
-      });
+      await increment({});
       setOptimisticDelta(0);
     } catch (error) {
       setOptimisticDelta(0);
@@ -127,12 +119,12 @@ function App() {
           className="press-button"
           type="button"
           onClick={handlePress}
-          disabled={isSubmitting || !counter || !clientId}
+          disabled={isSubmitting || !counter}
         >
           {isSubmitting ? "Registering..." : "Press"}
         </button>
 
-        <p className="press-meta">Server-side rate limits are active.</p>
+        <p className="press-meta">Global press stream is live.</p>
         {errorMessage ? <p className="press-error">{errorMessage}</p> : null}
       </section>
     </main>

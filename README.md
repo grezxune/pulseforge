@@ -28,7 +28,6 @@ Use [`.env.example`](/Users/tommy/Documents/code/grez-studios/pulseforge/.env.ex
 ## Architecture Notes
 - Counter uses a sharded Convex table (`counterShards`) to support high concurrent write throughput.
 - Frontend aggregates shard counts via `getTotal` and submits increments through `increment`.
-- Anti-abuse is enforced server-side via per-client rate limiting and temporary auto-blocking.
 
 ## Deployment Notes
 - Frontend target: Vercel.

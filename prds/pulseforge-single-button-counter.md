@@ -7,7 +7,7 @@ log:
   - 2026-03-05: Chosen stack switched from Next.js to Vite + React for minimal overhead.
   - 2026-03-05: Implemented sharded Convex counter model and one-screen branded UI.
   - 2026-03-05: Added bot protection with Turnstile verification, token replay prevention, and server-side rate limiting.
-  - 2026-03-06: Removed Turnstile/captcha integration; kept server-side rate limiting only.
+  - 2026-03-06: Removed Turnstile/captcha integration and removed remaining bot-rate-limit table usage.
 ---
 
 ## Problem
@@ -39,15 +39,14 @@ This experiment validates high-scale write behavior, UX polish under constrained
 
 ## Data & Integrations
 - Convex table `counterShards` with write sharding for increment throughput.
-- Convex table `botClients` for per-client rate-limit state and temporary blocks.
 - Convex query `getTotal` aggregates shard counts.
-- Convex mutation `increment` enforces rate limits and updates sharded counts.
+- Convex mutation `increment` updates sharded counts.
 
 ## Security Architecture & Threat Model
 - Trust boundary: public client to Convex public mutation.
 - Abuse case: scripted rapid-fire presses.
-  Mitigations: per-client rate limiting with temporary blocks.
-- Input validation: mutation validates `clientId` format and clamps `shardHint` to valid numeric range.
+  Mitigation path: add edge or API-layer throttling if abuse appears in production.
+- Input validation: mutation clamps `shardHint` to valid numeric range.
 - Secrets: deployment URLs and keys remain in environment variables.
 
 ## Performance Strategy & Budgets
@@ -72,4 +71,4 @@ This experiment validates high-scale write behavior, UX polish under constrained
 3. Deploy frontend to Vercel with Convex URL environment variable.
 
 ## Next Steps
-- Tune rate-limit thresholds after observing real traffic patterns.
+- Add network-level throttling if abuse is observed.
