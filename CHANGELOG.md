@@ -26,3 +26,5 @@
 - Added an interactive chat bubble voice system for the button with rotating taunts and post-click reactions.
 - Added 300 taunt lines and 300 click-response lines via phrase pools with non-repeating shuffled playback.
 - Added timing behavior: taunts rotate every few seconds, pause immediately after click, and resume after 5 seconds of idle time.
+- Updated bubble timing to a unified 6-second display window for taunts and click responses.
+- Added a 2-second silent gap between bubble messages and reserved fixed bubble space to prevent layout shift.

@@ -131,11 +131,18 @@ body::before {
   line-height: 1;
 }
 
+.press-bubble-slot {
+  width: min(30ch, 100%);
+  min-height: 4.35rem;
+  display: flex;
+  align-items: flex-start;
+}
+
 .press-bubble {
   position: relative;
   margin: 0.15rem 0 0;
   min-height: 3.4rem;
-  width: min(30ch, 100%);
+  width: 100%;
   padding: 0.7rem 0.95rem;
   border-radius: 1rem;
   border: 1px solid color-mix(in srgb, var(--soft-border), transparent 8%);
@@ -150,6 +157,23 @@ body::before {
   line-height: 1.35;
   color: var(--text-main);
   text-align: left;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(4px);
+  transition:
+    opacity 180ms ease,
+    transform 180ms ease,
+    visibility 0s linear 180ms;
+}
+
+.press-bubble.is-visible {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+  transition:
+    opacity 180ms ease,
+    transform 180ms ease,
+    visibility 0s linear 0s;
 }
 
 .press-bubble::after {
@@ -163,6 +187,12 @@ body::before {
   border-bottom: 1px solid color-mix(in srgb, var(--soft-border), transparent 10%);
   background: color-mix(in srgb, var(--card-bg), transparent 7%);
   transform: translateX(-50%) rotate(45deg);
+  opacity: 0;
+  transition: opacity 180ms ease;
+}
+
+.press-bubble.is-visible::after {
+  opacity: 1;
 }
 
 .press-button {

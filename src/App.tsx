@@ -5,20 +5,21 @@ import { api } from "../convex/_generated/api";
 import { formatCount } from "./lib/count-format";
 import { PRESS_RESPONSE_LINES, TAUNT_LINES } from "./lib/button-voice";
 
-const TAUNT_INTERVAL_MS = 3_200;
-const TAUNT_RESUME_DELAY_MS = 5_000;
+const MESSAGE_VISIBLE_MS = 6_000;
+const MESSAGE_GAP_MS = 2_000;
 
 /** Main single-screen interaction for the PulseForge counter experiment. */
 function App() {
   const stageRef = useRef<HTMLElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
+  const tauntStartTimeoutRef = useRef<number | null>(null);
   const tauntIntervalRef = useRef<number | null>(null);
-  const tauntResumeTimeoutRef = useRef<number | null>(null);
+  const bubbleHideTimeoutRef = useRef<number | null>(null);
   const tauntDeckRef = useRef<number[]>([]);
   const responseDeckRef = useRef<number[]>([]);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [pendingPresses, setPendingPresses] = useState(0);
-  const [bubbleLine, setBubbleLine] = useState(TAUNT_LINES[0]);
+  const [bubbleLine, setBubbleLine] = useState<string | null>(null);
 
   const counter = useQuery(api.counter.getTotal);
   const increment = useMutation(api.counter.increment);
@@ -59,31 +60,42 @@ function App() {
   );
 
   const clearVoiceTimers = useCallback(() => {
+    if (tauntStartTimeoutRef.current !== null) {
+      window.clearTimeout(tauntStartTimeoutRef.current);
+      tauntStartTimeoutRef.current = null;
+    }
+
     if (tauntIntervalRef.current !== null) {
       window.clearInterval(tauntIntervalRef.current);
       tauntIntervalRef.current = null;
     }
 
-    if (tauntResumeTimeoutRef.current !== null) {
-      window.clearTimeout(tauntResumeTimeoutRef.current);
-      tauntResumeTimeoutRef.current = null;
+    if (bubbleHideTimeoutRef.current !== null) {
+      window.clearTimeout(bubbleHideTimeoutRef.current);
+      bubbleHideTimeoutRef.current = null;
     }
   }, []);
 
-  const startTauntInterval = useCallback(() => {
-    if (tauntIntervalRef.current !== null) {
-      window.clearInterval(tauntIntervalRef.current);
+  const showTaunt = useCallback(() => {
+    setBubbleLine(getNextTaunt());
+    if (bubbleHideTimeoutRef.current !== null) {
+      window.clearTimeout(bubbleHideTimeoutRef.current);
     }
-
-    tauntIntervalRef.current = window.setInterval(() => {
-      setBubbleLine(getNextTaunt());
-    }, TAUNT_INTERVAL_MS);
+    bubbleHideTimeoutRef.current = window.setTimeout(() => {
+      setBubbleLine(null);
+    }, MESSAGE_VISIBLE_MS);
   }, [getNextTaunt]);
 
-  const resumeTauntsNow = useCallback(() => {
-    setBubbleLine(getNextTaunt());
-    startTauntInterval();
-  }, [getNextTaunt, startTauntInterval]);
+  const startTauntLoop = useCallback(
+    (delayMs: number = MESSAGE_GAP_MS) => {
+      clearVoiceTimers();
+      tauntStartTimeoutRef.current = window.setTimeout(() => {
+        showTaunt();
+        tauntIntervalRef.current = window.setInterval(showTaunt, MESSAGE_VISIBLE_MS + MESSAGE_GAP_MS);
+      }, delayMs);
+    },
+    [clearVoiceTimers, showTaunt],
+  );
 
   useEffect(() => {
     const stage = stageRef.current;
@@ -110,9 +122,9 @@ function App() {
   }, []);
 
   useEffect(() => {
-    startTauntInterval();
+    startTauntLoop(MESSAGE_GAP_MS);
     return () => clearVoiceTimers();
-  }, [clearVoiceTimers, startTauntInterval]);
+  }, [clearVoiceTimers, startTauntLoop]);
 
   useEffect(() => {
     const button = buttonRef.current;
@@ -158,18 +170,13 @@ function App() {
       return;
     }
 
-    if (tauntIntervalRef.current !== null) {
-      window.clearInterval(tauntIntervalRef.current);
-      tauntIntervalRef.current = null;
-    }
-    if (tauntResumeTimeoutRef.current !== null) {
-      window.clearTimeout(tauntResumeTimeoutRef.current);
-    }
+    clearVoiceTimers();
 
     setBubbleLine(getNextResponse());
-    tauntResumeTimeoutRef.current = window.setTimeout(() => {
-      resumeTauntsNow();
-    }, TAUNT_RESUME_DELAY_MS);
+    bubbleHideTimeoutRef.current = window.setTimeout(() => {
+      setBubbleLine(null);
+      startTauntLoop(MESSAGE_GAP_MS);
+    }, MESSAGE_VISIBLE_MS);
 
     setErrorMessage(null);
     setPendingPresses((count) => count + 1);
@@ -195,9 +202,11 @@ function App() {
         </div>
         <p className="press-label">PulseForge</p>
         <p className="press-count">{counter ? formatCount(displayCount) : "..."}</p>
-        <p className="press-bubble" aria-hidden="true">
-          {bubbleLine}
-        </p>
+        <div className="press-bubble-slot" aria-hidden="true">
+          <p className={`press-bubble${bubbleLine ? " is-visible" : ""}`}>
+            {bubbleLine ?? ""}
+          </p>
+        </div>
 
         <button
           ref={buttonRef}

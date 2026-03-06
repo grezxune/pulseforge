@@ -62,7 +62,7 @@ describe("App", () => {
     });
   });
 
-  it("pauses taunts after click and resumes taunts after 5 seconds", async () => {
+  it("uses 6-second message windows with 2-second silent gaps", async () => {
     vi.useFakeTimers();
     mockedUseQuery.mockReturnValue({ total: 42, shardCount: 128, activeShards: 14 } as never);
     mockedUseMutation.mockReturnValue(vi.fn().mockResolvedValue({ ok: true, shard: 3 }) as never);
@@ -70,11 +70,27 @@ describe("App", () => {
     const { container } = render(<App />);
     const bubble = container.querySelector(".press-bubble");
 
-    expect(bubble?.textContent).toBeTruthy();
-    const firstTaunt = bubble?.textContent;
+    expect(bubble?.textContent).toBe("");
 
     act(() => {
-      vi.advanceTimersByTime(3_250);
+      vi.advanceTimersByTime(2_100);
+    });
+    const firstTaunt = bubble?.textContent;
+
+    expect(firstTaunt).toBeTruthy();
+
+    act(() => {
+      vi.advanceTimersByTime(5_800);
+    });
+    expect(bubble?.textContent).toBe(firstTaunt);
+
+    act(() => {
+      vi.advanceTimersByTime(250);
+    });
+    expect(bubble?.textContent).toBe("");
+
+    act(() => {
+      vi.advanceTimersByTime(2_100);
     });
     const secondTaunt = bubble?.textContent;
 
@@ -88,12 +104,17 @@ describe("App", () => {
     expect(clickResponse).not.toBe(secondTaunt);
 
     act(() => {
-      vi.advanceTimersByTime(4_900);
+      vi.advanceTimersByTime(5_800);
     });
     expect(bubble?.textContent).toBe(clickResponse);
 
     act(() => {
-      vi.advanceTimersByTime(150);
+      vi.advanceTimersByTime(250);
+    });
+    expect(bubble?.textContent).toBe("");
+
+    act(() => {
+      vi.advanceTimersByTime(2_100);
     });
     expect(bubble?.textContent).not.toBe(clickResponse);
   });

@@ -35,6 +35,8 @@ This experiment validates high-scale write behavior, UX polish under constrained
 - Provide matching logo + favicon.
 - Publish complete SEO/share metadata for social cards and crawler indexing.
 - Display a button speech bubble that taunts periodically and reacts to presses.
+  - Message timing: 6 seconds visible with a 2-second silent interval between messages.
+  - Layout stability: reserve static bubble height to avoid component movement during message gaps.
 
 ## Non-functional Requirements
 - Mobile and desktop responsive.
