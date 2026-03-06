@@ -20,6 +20,7 @@ log:
   - 2026-03-06: Removed the lower "Recent World Winners" tile and kept winner visibility in the HUD-only latest winner slot.
   - 2026-03-06: Replaced fixed level presets with an infinite scaling difficulty engine, viewport-wide teleporting, and level-driven button size pulse animation.
   - 2026-03-06: Added fairness guardrails to the infinite scaling engine to prevent impossible rounds (bounded closed-window gap, teleport cadence, pulse scale, and pulse speed).
+  - 2026-03-06: Updated SEO/distribution metadata messaging to position PulsePress as a one-button world-record game.
 ---
 
 ## Problem
@@ -43,7 +44,7 @@ This experiment validates high-scale write behavior, UX polish under constrained
 - Reflect count updates in realtime.
 - Show loading and error feedback.
 - Provide matching logo + favicon.
-- Publish complete SEO/share metadata for social cards and crawler indexing.
+- Publish complete SEO/share metadata for social cards and crawler indexing with explicit one-button game and world-record positioning.
 - Display a button speech bubble that taunts periodically and reacts to presses.
   - Message timing: 6 seconds visible with a 2-second silent interval between messages.
   - Layout stability: reserve static bubble height to avoid component movement during message gaps.

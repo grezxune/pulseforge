@@ -1,12 +1,13 @@
 {
   "name": "PulsePress",
   "short_name": "PulsePress",
-  "description": "A one-button real-time global press counter experiment.",
+  "description": "A one-button world record game with a live global count and level chase.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "background_color": "#111111",
   "theme_color": "#111111",
+  "categories": ["games", "entertainment"],
   "icons": [
     {
       "src": "/favicon.png",
