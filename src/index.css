@@ -144,6 +144,14 @@ body::before {
   color: var(--text-muted);
 }
 
+.press-description {
+  margin: 0;
+  max-width: 36ch;
+  font-size: 0.84rem;
+  line-height: 1.35;
+  color: var(--text-muted);
+}
+
 .press-error {
   color: var(--signal);
 }

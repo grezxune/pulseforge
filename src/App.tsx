@@ -125,6 +125,10 @@ function App() {
         </button>
 
         <p className="press-meta">Global press stream is live.</p>
+        <p className="press-description">
+          This experiment is a single global count of how many times the button
+          has been pressed.
+        </p>
         {errorMessage ? <p className="press-error">{errorMessage}</p> : null}
       </section>
     </main>

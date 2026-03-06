@@ -1,6 +1,7 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { ConvexProvider, ConvexReactClient } from "convex/react";
+import { inject } from "@vercel/analytics";
 import App from "./App";
 import "./index.css";
 
@@ -12,6 +13,7 @@ if (!rootElement) {
 }
 
 const root = createRoot(rootElement);
+inject();
 
 if (!convexUrl) {
   root.render(
